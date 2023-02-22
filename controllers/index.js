@@ -1,3 +1,7 @@
-const accountController = require('./accountController');
+const accountController = require('./accountController/accountController');
+const tokenController = require('./tokenController/tokenController');
 
-module.exports = { accountController }
+module.exports = {
+    accountController,
+    tokenController
+}

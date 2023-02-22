@@ -1,3 +1,4 @@
-const accountRoute = require('./accountRoute');
+const accountRoute = require('./accountRoute/accountRoute');
+const tokenRoute = require('./tokenRoute/tokenRoute');
 
-module.exports = [accountRoute];
+module.exports = [accountRoute, tokenRoute];

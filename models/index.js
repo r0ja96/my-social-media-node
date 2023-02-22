@@ -1,3 +1,7 @@
-const AccountModel = require('./accountModel');
+const AccountModel = require('./accountModel/accountModel');
+const TokenModel = require('./tokenModel/tokenModel');
 
-module.exports = { AccountModel };
+module.exports = {
+    AccountModel,
+    TokenModel
+};

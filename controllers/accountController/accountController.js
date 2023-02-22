@@ -1,4 +1,4 @@
-const { AccountModel } = require('../models');
+const { AccountModel, TokenModel } = require('../../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -42,9 +42,32 @@ const signIn = () => async (req, res) => {
 
         if (!isPassword) return res.status(400).json({ status: "Failed", message: "Wrong password" })
 
-        const token = await jwt.sign({ _id: emailExist._id }, 'qwert', { expiresIn: '86400s' });
+        const token = await jwt.sign({ _id: emailExist._id }, process.env.REFRESH_TOKEN_SECRET);
 
-        res.status(200).json({ status: "Success", message: "Log In", data: { id: emailExist._id, name: emailExist.name, lastName: emailExist.lastName, token } });
+        const newToken = new TokenModel({ token });
+
+        await newToken.save()
+
+        res.status(200).json({ status: "Success", message: "Log In", data: { token } });
+
+    } catch (e) {
+        console.log(e);
+        res.status(400).json({ status: "Failed", message: "Something went wrong" });
+    }
+}
+
+const logOut = () => async (req, res) => {
+    const { token } = req.body;
+
+    try {
+        const tokenExist = await TokenModel.findOne({ token });
+
+
+        if (tokenExist) {
+            await tokenExist.remove();
+        }
+
+        res.status(200).json({ status: "Success", message: "Log Out" });
 
     } catch (e) {
         console.log(e);
@@ -68,4 +91,4 @@ const lastAccounts = () => async (req, res) => {
     }
 }
 
-module.exports = { create, signIn, lastAccounts };
+module.exports = { create, signIn, lastAccounts, logOut };
