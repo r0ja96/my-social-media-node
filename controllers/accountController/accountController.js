@@ -1,4 +1,4 @@
-const { AccountModel, TokenModel } = require('../../models');
+const { AccountModel, TokenModel, FriendModel } = require('../../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -42,13 +42,15 @@ const signIn = () => async (req, res) => {
 
         if (!isPassword) return res.status(400).json({ status: "Failed", message: "Wrong password" })
 
-        const token = await jwt.sign({ _id: emailExist._id }, process.env.REFRESH_TOKEN_SECRET);
+        const secounds = 604800;
+
+        const token = await jwt.sign({ _id: emailExist._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: `${secounds}s` });
 
         const newToken = new TokenModel({ token });
 
         await newToken.save()
 
-        res.status(200).json({ status: "Success", message: "Log In", data: { token } });
+        res.cookie('token', token, { httpOnly: false, maxAge: 1000 * secounds, sameSite: 'Strict' }).status(200).json({ status: "Success", message: "Log In" });
 
     } catch (e) {
         console.log(e);
@@ -57,7 +59,7 @@ const signIn = () => async (req, res) => {
 }
 
 const logOut = () => async (req, res) => {
-    const { token } = req.body;
+    const { token } = req.cookies;
 
     try {
         const tokenExist = await TokenModel.findOne({ token });
@@ -67,7 +69,7 @@ const logOut = () => async (req, res) => {
             await tokenExist.remove();
         }
 
-        res.status(200).json({ status: "Success", message: "Log Out" });
+        res.clearCookie('token').status(200).json({ status: "Success", message: "Log Out" });
 
     } catch (e) {
         console.log(e);
@@ -77,9 +79,21 @@ const logOut = () => async (req, res) => {
 
 const lastAccounts = () => async (req, res) => {
 
+    const { _id } = req;
+
+    console.log(_id);
+
     try {
 
-        const accounts = await AccountModel.find({}, { name: 1, lastName: 1 }).sort({ _id: -1 }).limit(10);
+        let friendship = await FriendModel.find({ 'friendshipID.accountID': _id }, { 'friendshipID.accountID': 0, _id: 0, __v: 0 });
+
+        friendship = friendship.map(({ friendshipID }) => friendshipID.friendID ? friendshipID.friendID : null);
+
+        console.log(friendship);
+
+        //const accounts = await AccountModel.find({ _id: { $in: friendship } }, { name: 1, lastName: 1 }).sort({ _id: -1 }).limit(10);
+
+        const accounts = await AccountModel.find({ _id: { $not: { $in: friendship } } }, { name: 1, lastName: 1 }).sort({ _id: -1 }).limit(10);
 
         res.status(200).json({ status: "Success", data: accounts });
 
