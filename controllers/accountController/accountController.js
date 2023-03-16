@@ -44,7 +44,7 @@ const signIn = () => async (req, res) => {
 
         const secounds = 604800;
 
-        const token = await jwt.sign({ _id: emailExist._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: `${secounds}s` });
+        const token = await jwt.sign({ _id: emailExist._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: `${60}s` });
 
         const newToken = new TokenModel({ token });
 
@@ -81,15 +81,13 @@ const lastAccounts = () => async (req, res) => {
 
     const { _id } = req;
 
-    console.log(_id);
-
     try {
 
         let friendship = await FriendModel.find({ 'friendshipID.accountID': _id }, { 'friendshipID.accountID': 0, _id: 0, __v: 0 });
 
         friendship = friendship.map(({ friendshipID }) => friendshipID.friendID ? friendshipID.friendID : null);
 
-        console.log(friendship);
+        friendship.push(_id);
 
         //const accounts = await AccountModel.find({ _id: { $in: friendship } }, { name: 1, lastName: 1 }).sort({ _id: -1 }).limit(10);
 
