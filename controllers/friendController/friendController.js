@@ -1,4 +1,4 @@
-const { AccountModel, TokenModel, FriendModel } = require('../../models');
+const { AccountModel, FriendModel } = require('../../models');
 
 
 const addFriend = () => async (req, res) => {
