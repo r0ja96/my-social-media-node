@@ -44,7 +44,7 @@ const signIn = () => async (req, res) => {
 
         const secounds = 604800;
 
-        const token = await jwt.sign({ _id: emailExist._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: `${60}s` });
+        const token = await jwt.sign({ _id: emailExist._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: `${secounds}s` });
 
         const newToken = new TokenModel({ token });
 

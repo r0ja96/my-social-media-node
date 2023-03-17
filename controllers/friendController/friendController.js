@@ -35,8 +35,6 @@ const friends = () => async (req, res) => {
 
         friendship = friendship.map(({ friendshipID }) => friendshipID.friendID ? friendshipID.friendID : null);
 
-        friendship.push(_id);
-
         const accounts = await AccountModel.find({ _id: { $in: friendship } }, { name: 1, lastName: 1 }).sort({ _id: -1 }).limit(10);
 
         //const accounts = await AccountModel.find({ _id: { $not: { $in: friendship } } }, { name: 1, lastName: 1 }).sort({ _id: -1 }).limit(10);
