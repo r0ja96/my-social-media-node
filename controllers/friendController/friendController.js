@@ -7,7 +7,7 @@ const addFriend = () => async (req, res) => {
     const { _id } = req;
 
     const friendshipID = { accountID: _id, friendID }
-    const friendshipID2 = {accountID: friendID, friendID: _id}
+    const friendshipID2 = { accountID: friendID, friendID: _id }
     try {
         const friendshipExist = await FriendModel.findOne({ friendshipID });
         const friendshipExist2 = await FriendModel.findOne({ friendshipID: friendshipID2 });
