@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { PostModel, FriendModel } = require('../../models');
-const fs = require('fs');
+
 
 const addPost = () => async (req, res) => {
 
@@ -33,30 +33,37 @@ const getFriendsPost = () => async (req, res) => {
 
         friendship.push(mongoose.Types.ObjectId(_id));
 
-        const post = await PostModel.find({ accountID: { $in: friendship } }).sort({ postDate: -1 });
+        //const post = await PostModel.find({ accountID: { $in: friendship } }).sort({ postDate: -1 });
 
         const posts = await PostModel.aggregate([
             {
+                $match:{
+                    accountID:{ $in: friendship }
+                }
+            },
+            {
                 $lookup: {
-                    from: "accounts",       // other table name
-                    localField: "accountID",   // name of users table field
-                    foreignField: "_id", // name of userinfo table field
-                    as: "accounts"         // alias for userinfo table
+                    from: "accounts",       
+                    localField: "accountID",   
+                    foreignField: "_id", 
+                    as: "account"       
                 }
             }, {
-                $unwind: "$accounts"
+                $unwind: "$account"
             },
             {
                 $project: {
-                    "accounts.email": 0
+                    "account.birthday": 0,
+                    "account.email": 0,
+                    "account.password": 0,
+                    "account.__v":0,
+                    "accountID":0,
+                    "__v":0
                 }
             }
-        ]);
+        ]).sort({ postDate: -1 });
 
-        console.log(posts);
-        console.log('--------------------------------');
-
-        res.status(200).json({ data: post, status: "Success", message: "Post created" });
+        res.status(200).json({ data: posts, status: "Success", message: "Post created" });
 
     } catch (e) {
         console.log(e)
