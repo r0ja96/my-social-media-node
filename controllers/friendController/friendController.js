@@ -1,13 +1,13 @@
 const { AccountModel, FriendModel } = require('../../models');
-
+const mongoose = require('mongoose');
 
 const addFriend = () => async (req, res) => {
 
     const { friendID } = req.body;
     const { _id } = req;
 
-    const friendshipID = { accountID: _id, friendID }
-    const friendshipID2 = { accountID: friendID, friendID: _id }
+    const friendshipID = { accountID: mongoose.Types.ObjectId(_id), friendID: mongoose.Types.ObjectId(friendID) }
+    const friendshipID2 = { accountID: mongoose.Types.ObjectId(friendID), friendID: mongoose.Types.ObjectId(_id) }
     try {
         const friendshipExist = await FriendModel.findOne({ friendshipID });
         const friendshipExist2 = await FriendModel.findOne({ friendshipID: friendshipID2 });
@@ -31,15 +31,32 @@ const friends = () => async (req, res) => {
 
     try {
 
-        let friendship = await FriendModel.find({ 'friendshipID.accountID': _id }, { 'friendshipID.accountID': 0, _id: 0, __v: 0 });
+        let friendship = await FriendModel.aggregate([
+            { $match: { 'friendshipID.accountID': mongoose.Types.ObjectId(_id) } },
+            {
+                $lookup:
+                {
+                    from: "accounts",
+                    localField: "friendshipID.friendID",
+                    foreignField: "_id",
+                    as: "accounts"
+                }
+            },
+            {
+                $unwind: "$accounts"
+            },
+            {
+                $project: {
+                    "accounts._id": 1,
+                    "accounts.name": 1,
+                    "accounts.lastName": 1,
+                }
+            },
+        ]);
 
-        friendship = friendship.map(({ friendshipID }) => friendshipID.friendID ? friendshipID.friendID : null);
+        friendship = friendship.map((data) => data.accounts);
 
-        const accounts = await AccountModel.find({ _id: { $in: friendship } }, { name: 1, lastName: 1 }).sort({ _id: -1 }).limit(10);
-
-        //const accounts = await AccountModel.find({ _id: { $not: { $in: friendship } } }, { name: 1, lastName: 1 }).sort({ _id: -1 }).limit(10);
-
-        res.status(200).json({ status: "Success", data: accounts });
+        res.status(200).json({ status: "Success", data: friendship });
 
     } catch (e) {
 

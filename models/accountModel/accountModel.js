@@ -8,6 +8,6 @@ const accountSchema = mongoose.Schema({
     password: { type: String, required: true }
 });
 
-const AccountModel = mongoose.model('accountModel', accountSchema);
+const AccountModel = mongoose.model('accounts', accountSchema);
 
 module.exports = AccountModel;

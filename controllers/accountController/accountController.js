@@ -1,4 +1,5 @@
 const { AccountModel, TokenModel, FriendModel } = require('../../models');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -83,13 +84,11 @@ const lastAccounts = () => async (req, res) => {
 
     try {
 
-        let friendship = await FriendModel.find({ 'friendshipID.accountID': _id }, { 'friendshipID.accountID': 0, _id: 0, __v: 0 });
+        let friendship = await FriendModel.find({ 'friendshipID.accountID': mongoose.Types.ObjectId(_id) }, { 'friendshipID.accountID': 0, _id: 0, __v: 0 });
 
         friendship = friendship.map(({ friendshipID }) => friendshipID.friendID ? friendshipID.friendID : null);
 
-        friendship.push(_id);
-
-        //const accounts = await AccountModel.find({ _id: { $in: friendship } }, { name: 1, lastName: 1 }).sort({ _id: -1 }).limit(10);
+        friendship.push(mongoose.Types.ObjectId(_id));
 
         const accounts = await AccountModel.find({ _id: { $not: { $in: friendship } } }, { name: 1, lastName: 1 }).sort({ _id: -1 }).limit(10);
 
