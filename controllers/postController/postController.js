@@ -126,9 +126,7 @@ const getFriendsPost = () => async (req, res) => {
             return data;
         });
 
-        console.log(posts)
-
-        res.status(200).json({ data: posts, status: "Success", message: "Post created" });
+        res.status(200).json({ data: posts, status: "Success", message: "Post found" });
 
     } catch (e) {
         console.log(e)
@@ -136,4 +134,113 @@ const getFriendsPost = () => async (req, res) => {
     }
 }
 
-module.exports = { addPost, getFriendsPost };
+const getPost = () => async (req, res) => {
+
+    const { _id } = req;
+
+    const { postID } = req.params;
+
+
+    try {
+
+        let posts = await PostModel.aggregate([
+            {
+                $match: {
+                    _id: mongoose.Types.ObjectId(postID)
+                }
+            }, {
+                $lookup: {
+                    from: "accounts",
+                    localField: "accountID",
+                    foreignField: "_id",
+                    as: "account"
+                }
+            }, {
+                $unwind: "$account"
+            }, {
+                $project: {
+                    "account.birthday": 0,
+                    "account.email": 0,
+                    "account.password": 0,
+                    "account.__v": 0,
+                    "accountID": 0,
+                    "__v": 0
+                }
+            }, {
+                $lookup: {
+                    from: "likes",
+                    localField: "_id",
+                    foreignField: "likeID.postID",
+                    as: "like"
+                }
+            }, {
+                $project: {
+                    "like._id": 0,
+                    "like.__v": 0
+                }
+            },
+            {
+                $lookup: {
+                    from: "comments",
+                    localField: "_id",
+                    foreignField: "postID",
+                    pipeline: [
+                        {
+                            $lookup: {
+                                from: "accounts",
+                                localField: "accountID",
+                                foreignField: "_id",
+                                as: "account"
+                            }
+                        }, {
+                            $unwind: "$account"
+                        },
+                        {
+                            $project: {
+                                "account.birthday": 0,
+                                "account.email": 0,
+                                "account.password": 0,
+                                "account.__v": 0,
+                            }
+                        }
+                    ],
+                    as: "comments"
+                }
+            }, {
+                $project: {
+                    "comments.accountID": 0,
+                    "comments.postID": 0,
+                    "comments.__v": 0
+                }
+            }
+        ]);
+
+        posts.map((data) => {
+
+            const like = {
+                likes: data.like.length,
+                like: false
+            }
+
+            for (const d of data.like) {
+                if (String(d.likeID.accountID) === _id) {
+                    like.like = true;
+                    break;
+                }
+            }
+
+            data.like = like;
+
+            return data;
+        });
+
+        res.status(200).json({ data: posts, status: "Success", message: "Post found" });
+
+    } catch (e) {
+        console.log(e)
+        res.status(400).json({ status: "Failed", message: "Something went wrong" });
+    }
+
+}
+
+module.exports = { addPost, getFriendsPost, getPost };

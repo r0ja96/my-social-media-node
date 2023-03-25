@@ -27,4 +27,27 @@ const like = () => async (req, res) => {
 
 }
 
-module.exports = { like };
+const unlike = () => async (req, res) => {
+
+    try {
+
+        const likeID = {
+            postID: mongoose.Types.ObjectId(req.body.postID),
+            accountID: mongoose.Types.ObjectId(req._id)
+        }
+
+        const likeExist = await LikeModel.findOne({ likeID });
+
+        if (!(likeExist)) return res.status(400).json({ status: "Failed", message: "Like doesnt exist" });
+
+        await LikeModel.deleteOne(likeExist);
+
+        res.status(200).json({ status: "Success", message: "Like delete" });
+    } catch (e) {
+        console.log(e)
+        res.status(400).json({ status: "Failed", message: "Something went wrong" });
+    }
+
+}
+
+module.exports = { like, unlike };
