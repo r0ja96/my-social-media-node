@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
-const { PostModel, FriendModel, AccountModel } = require('../../models');
+const fs = require('fs');
+const path = require('path');
+const appDir = path.dirname(require.main.filename);
+const { PostModel, FriendModel, LikeModel, CommentModel } = require('../../models');
 
 
 const addPost = () => async (req, res) => {
@@ -109,6 +112,8 @@ const getFriendsPost = () => async (req, res) => {
 
         posts.map((data) => {
 
+            data.account.isAccountPost = (String(data.account._id) === _id);
+
             const like = {
                 likes: data.like.length,
                 like: false
@@ -217,6 +222,8 @@ const getPost = () => async (req, res) => {
 
         posts.map((data) => {
 
+            data.account.isAccountPost = (String(data.account._id) === _id);
+
             const like = {
                 likes: data.like.length,
                 like: false
@@ -243,4 +250,35 @@ const getPost = () => async (req, res) => {
 
 }
 
-module.exports = { addPost, getFriendsPost, getPost };
+const deletePost = () => async (req, res) => {
+
+    const postID = mongoose.Types.ObjectId(req.body.postID);
+    const accountID = mongoose.Types.ObjectId(req._id);
+
+    try {
+
+        const postExist = await PostModel.findOne({ _id: postID, accountID });
+
+        if (!(postExist)) return res.status(400).json({ status: "Failed", message: "Post doesnt exist" });
+
+        await LikeModel.deleteMany({ 'likeID.postID': postID });
+        await CommentModel.deleteMany({ postID });
+        await PostModel.deleteOne(postExist);
+
+        if (postExist.image) {
+            const fullImagePath = path.join(appDir, `/uploads/${req._id}/${postExist.image}`);
+
+            if (fs.existsSync(fullImagePath))
+                fs.unlink(fullImagePath, function (err) {
+                    if (err) throw err;
+                });
+        }
+
+        res.status(200).json({ status: "Success", message: "Post delete" });
+    } catch (e) {
+        console.log(e)
+        res.status(400).json({ status: "Failed", message: "Something went wrong" });
+    }
+}
+
+module.exports = { addPost, getFriendsPost, getPost, deletePost };
