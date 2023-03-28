@@ -25,6 +25,26 @@ const addPost = () => async (req, res) => {
 
 }
 
+const editPost = () => async (req, res) => {
+
+    try {
+
+        const newPost = new PostModel({
+            accountID: mongoose.Types.ObjectId(req._id),
+            text: req.body.text,
+            image: (req.file ? req.file.name : null),
+            postDate: Date.now()
+        });
+
+        await newPost.save();
+        res.status(200).json({ status: "Success", message: "Post edited" });
+    } catch (e) {
+        console.log(e)
+        res.status(400).json({ status: "Failed", message: "Something went wrong" });
+    }
+
+}
+
 const getFriendsPost = () => async (req, res) => {
 
     const { _id } = req;
@@ -281,4 +301,4 @@ const deletePost = () => async (req, res) => {
     }
 }
 
-module.exports = { addPost, getFriendsPost, getPost, deletePost };
+module.exports = { addPost, getFriendsPost, getPost, deletePost, editPost };
