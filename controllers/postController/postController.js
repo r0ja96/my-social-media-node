@@ -29,14 +29,40 @@ const editPost = () => async (req, res) => {
 
     try {
 
-        const newPost = new PostModel({
+        /*console.log({
+            accountID: mongoose.Types.ObjectId(req._id),
+            text: req.body.text,
+            image: (req.file ? req.file.name : null),
+            postDate: Date.now()
+        });*/
+
+        const postExist = await PostModel.findOne({_id: mongoose.Types.ObjectId(req.body.postID), accountID:mongoose.Types.ObjectId(req._id) });
+
+        if(!(postExist)) return res.status(400).json({ status: "Failed", message: "Post doesnt exist" });
+
+        //console.log(postExist);
+
+        if (postExist.image) {
+            const fullImagePath = path.join(appDir, `/uploads/${req._id}/${postExist.image}`);
+
+            if (fs.existsSync(fullImagePath))
+                fs.unlink(fullImagePath, function (err) {
+                    if (err) throw err;
+                });
+        }
+
+        const editedPost = await PostModel.updateOne(postExist,{text: req.body.text, image: (req.file ? req.file.name : null)});
+
+        console.log(editedPost);
+
+        /*const newPost = new PostModel({
             accountID: mongoose.Types.ObjectId(req._id),
             text: req.body.text,
             image: (req.file ? req.file.name : null),
             postDate: Date.now()
         });
 
-        await newPost.save();
+        await newPost.save();*/
         res.status(200).json({ status: "Success", message: "Post edited" });
     } catch (e) {
         console.log(e)
