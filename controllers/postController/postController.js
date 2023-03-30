@@ -36,9 +36,9 @@ const editPost = () => async (req, res) => {
             postDate: Date.now()
         });*/
 
-        const postExist = await PostModel.findOne({_id: mongoose.Types.ObjectId(req.body.postID), accountID:mongoose.Types.ObjectId(req._id) });
+        const postExist = await PostModel.findOne({ _id: mongoose.Types.ObjectId(req.body.postID), accountID: mongoose.Types.ObjectId(req._id) });
 
-        if(!(postExist)) return res.status(400).json({ status: "Failed", message: "Post doesnt exist" });
+        if (!(postExist)) return res.status(400).json({ status: "Failed", message: "Post doesnt exist" });
 
         //console.log(postExist);
 
@@ -51,7 +51,7 @@ const editPost = () => async (req, res) => {
                 });
         }
 
-        const editedPost = await PostModel.updateOne(postExist,{text: req.body.text, image: (req.file ? req.file.name : null)});
+        const editedPost = await PostModel.updateOne(postExist, { text: req.body.text, image: (req.file ? req.file.name : null) });
 
         console.log(editedPost);
 
@@ -159,6 +159,11 @@ const getFriendsPost = () => async (req, res) => {
         posts.map((data) => {
 
             data.account.isAccountPost = (String(data.account._id) === _id);
+
+            data.comments = data.comments.map((comment) => {
+                comment.account.isAccountComment = (String(comment.account._id) === _id);
+                return comment
+            });
 
             const like = {
                 likes: data.like.length,
@@ -269,6 +274,11 @@ const getPost = () => async (req, res) => {
         posts.map((data) => {
 
             data.account.isAccountPost = (String(data.account._id) === _id);
+
+            data.comments = data.comments.map((comment) => {
+                comment.account.isAccountComment = (String(comment.account._id) === _id);
+                return comment
+            });
 
             const like = {
                 likes: data.like.length,
